@@ -235,7 +235,7 @@ export async function createPendingOrder(input: {
     return { order: formatOrder(existingPending.data as OrderRow), created: false };
   }
 
-  const id = `ARISAN-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
+  const id = `AWC${Date.now()}${randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase()}`;
   const inserted = await client
     .from("arisan_orders")
     .insert({

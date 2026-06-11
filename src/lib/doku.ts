@@ -33,6 +33,10 @@ function digest(body: string) {
   return createHash("sha256").update(body).digest("base64");
 }
 
+function requestTimestamp() {
+  return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function safeEqual(left: string, right: string) {
   const leftBuffer = Buffer.from(left);
   const rightBuffer = Buffer.from(right);
@@ -85,6 +89,15 @@ export async function createDokuCheckout(input: {
       callback_url_cancel: origin,
       callback_url_result: `${origin}/berhasil?orderId=${input.orderId}`,
       language: "ID",
+      auto_redirect: true,
+      line_items: [
+        {
+          id: "ARISANPIALADUNIA",
+          name: "Arisan Piala Dunia",
+          price: ENTRY_FEE_IDR,
+          quantity: 1,
+        },
+      ],
     },
     payment: {
       payment_due_date: 60,
@@ -101,7 +114,7 @@ export async function createDokuCheckout(input: {
   });
 
   const requestId = randomUUID();
-  const timestamp = new Date().toISOString();
+  const timestamp = requestTimestamp();
   const signature = createDokuSignature({
     clientId,
     requestId,
@@ -143,7 +156,13 @@ export async function createDokuCheckout(input: {
   if (!response.ok || !payload.response?.payment?.url) {
     const message =
       payload.error?.message ?? payload.message?.join(", ") ?? "DOKU checkout gagal dibuat.";
-    throw new Error(`${message} (HTTP ${response.status})`);
+    console.error("DOKU checkout failed", {
+      status: response.status,
+      requestId,
+      message,
+      responseBody: responseText.slice(0, 500),
+    });
+    throw new Error(`${message} (HTTP ${response.status}, request ${requestId})`);
   }
 
   return payload.response.payment.url;
