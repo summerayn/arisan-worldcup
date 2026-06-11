@@ -37,6 +37,10 @@ function requestTimestamp() {
   return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
+function customerName(name: string) {
+  return name.replace(/[^a-zA-Z\s]/g, " ").replace(/\s+/g, " ").trim() || "Peserta Arisan";
+}
+
 function safeEqual(left: string, right: string) {
   const leftBuffer = Buffer.from(left);
   const rightBuffer = Buffer.from(right);
@@ -101,15 +105,11 @@ export async function createDokuCheckout(input: {
     },
     payment: {
       payment_due_date: 60,
+      payment_method_types: ["QRIS"],
     },
     customer: {
-      id: input.email,
-      name: input.name,
+      name: customerName(input.name),
       email: input.email,
-    },
-    additional_info: {
-      origin: "kocokan-piala-dunia",
-      notes: "Arisan teman teman kocokan Piala Dunia 2026",
     },
   });
 
