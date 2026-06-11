@@ -14,6 +14,7 @@ Dashboard arisan World Cup 2026 untuk 24 peserta. Setiap peserta mendaftar denga
 - Mode simulasi pembayaran untuk preview tanpa credential merchant.
 - Supabase production storage dengan RPC transaksi agar 2 peserta tidak bisa mendapat negara yang sama.
 - Admin API terlindungi token untuk update status negara gugur.
+- Readiness endpoint di `/api/readiness` untuk membuktikan apakah deploy sudah public-ready.
 
 ## Mode Payment
 
@@ -48,6 +49,19 @@ ADMIN_TOKEN=...
 
 `SUPABASE_SERVICE_ROLE_KEY` hanya dipakai di server route Vercel. Jangan expose key ini ke browser.
 
+Set env di Vercel:
+
+```bash
+vercel env add SUPABASE_URL production
+vercel env add SUPABASE_SERVICE_ROLE_KEY production
+vercel env add ADMIN_TOKEN production
+vercel env add DOKU_CLIENT_ID production
+vercel env add DOKU_SECRET_KEY production
+vercel env add DOKU_BASE_URL production
+vercel env add NEXT_PUBLIC_APP_URL production
+vercel deploy --prod
+```
+
 Update negara gugur:
 
 ```bash
@@ -70,7 +84,10 @@ npm run dev
 npm run lint
 npm run build
 STRESS_BASE_URL=http://127.0.0.1:3000 npm run stress
+REQUIRE_PUBLIC_READY=false npm run verify:prod
 ```
+
+`npm run verify:prod` tanpa `REQUIRE_PUBLIC_READY=false` wajib gagal jika production masih memakai `Memory demo` atau `QRIS simulasi`. Setelah Supabase dan DOKU env aktif, command itu menjadi gate akhir sebelum link dibagikan publik.
 
 ## Production Persistence
 
