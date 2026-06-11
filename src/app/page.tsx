@@ -28,6 +28,11 @@ function formatIdr(value: number) {
   return `Rp${new Intl.NumberFormat("id-ID").format(value)}`;
 }
 
+function splitMatch(label: string) {
+  const [home, away] = label.split(" vs ");
+  return { home: home ?? label, away: away ?? "TBD" };
+}
+
 function TeamChip({ code, status }: { code: string; status: "alive" | "eliminated" }) {
   const country = countryByCode(code);
   if (!country) {
@@ -38,6 +43,15 @@ function TeamChip({ code, status }: { code: string; status: "alive" | "eliminate
     <span className={`team-chip ${status === "eliminated" ? "is-eliminated" : ""}`}>
       <span className="team-code">{country.code}</span>
       <span>{country.name}</span>
+    </span>
+  );
+}
+
+function LockedChip() {
+  return (
+    <span className="team-chip locked-chip">
+      <span className="team-code">?</span>
+      <span>Negara dikunci</span>
     </span>
   );
 }
@@ -53,9 +67,20 @@ function ParticipantRow({
   countryStatuses: PublicState["countryStatuses"];
   countriesRevealed: boolean;
 }) {
+  const initials = participant.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+
   return (
-    <article className="participant-row">
+    <article className="participant-card">
       <div className="participant-rank">{String(index + 1).padStart(2, "0")}</div>
+      <div className="avatar-ring" aria-hidden="true">
+        {initials || "KP"}
+      </div>
       <div className="participant-name">
         <strong>{participant.name}</strong>
         <span>{participant.email}</span>
@@ -65,12 +90,7 @@ function ParticipantRow({
           ? participant.countries.map((code) => (
               <TeamChip key={code} code={code} status={countryStatuses[code] ?? "alive"} />
             ))
-          : Array.from({ length: 2 }).map((_, chipIndex) => (
-              <span className="team-chip locked-chip" key={chipIndex}>
-                <span className="team-code">?</span>
-                <span>Negara dikunci</span>
-              </span>
-            ))}
+          : Array.from({ length: 2 }).map((_, chipIndex) => <LockedChip key={chipIndex} />)}
       </div>
     </article>
   );
@@ -159,6 +179,76 @@ function JoinDialog({
   );
 }
 
+function PhonePreview({
+  participantCount,
+  maxParticipants,
+  lockedCountries,
+  slotsLeft,
+  countriesRevealed,
+}: {
+  participantCount: number;
+  maxParticipants: number;
+  lockedCountries: number;
+  slotsLeft: number;
+  countriesRevealed: boolean;
+}) {
+  const progress = Math.min(100, (participantCount / maxParticipants) * 100);
+
+  return (
+    <div className="phone-preview" aria-label="Status undian">
+      <div className="phone-top">
+        <span>9:41</span>
+        <span className="phone-camera" />
+        <span>LIVE</span>
+      </div>
+      <div className="live-card">
+        <span className="live-dot">Live Draw</span>
+        <h2>Kocokan Piala Dunia</h2>
+        <div className="score-board">
+          <div>
+            <strong>{participantCount}</strong>
+            <span>Peserta</span>
+          </div>
+          <span className="versus">/</span>
+          <div>
+            <strong>{maxParticipants}</strong>
+            <span>Target</span>
+          </div>
+        </div>
+      </div>
+      <div className="phone-stat-grid">
+        <div>
+          <span>Slot tersisa</span>
+          <strong>{slotsLeft}</strong>
+        </div>
+        <div>
+          <span>{countriesRevealed ? "Negara terbuka" : "Negara terkunci"}</span>
+          <strong>{lockedCountries}</strong>
+        </div>
+      </div>
+      <div className="draw-progress" aria-label={`${participantCount} dari ${maxParticipants} peserta`}>
+        {Array.from({ length: 24 }).map((_, index) => (
+          <span key={index} className={index < participantCount ? "is-filled" : ""} />
+        ))}
+      </div>
+      <div className="phone-match-list">
+        {matches.slice(0, 3).map((match) => {
+          const teams = splitMatch(match.label);
+          return (
+            <article key={`${match.date}-${match.label}`}>
+              <span>{match.date}</span>
+              <strong>{teams.home}</strong>
+              <small>VS</small>
+              <strong>{teams.away}</strong>
+            </article>
+          );
+        })}
+      </div>
+      <span className="progress-fill" style={{ width: `${progress}%` }} />
+    </div>
+  );
+}
+
 export default function Home() {
   const [state, setState] = useState(initialState);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -178,14 +268,16 @@ export default function Home() {
 
   const slotsLeft = state.maxParticipants - state.participants.length;
   const lockedCountries = state.participants.length * state.countriesPerParticipant;
+  const progress = Math.min(100, (state.participants.length / state.maxParticipants) * 100);
   const groups = useMemo(() => groupedCountries(), []);
-  const nextMatches = matches.slice(0, 14);
-  const laterMatches = matches.slice(14);
+  const headlineMatches = matches.slice(0, 2);
+  const nextMatches = matches.slice(0, 12);
+  const laterMatches = matches.slice(12);
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" id="beranda">
       <header className="topbar">
-        <a href="#" className="brand" aria-label="Kocokan Piala Dunia">
+        <a href="#beranda" className="brand" aria-label="Kocokan Piala Dunia">
           <span className="brand-mark">KP</span>
           <span>Kocokan Piala Dunia</span>
         </a>
@@ -195,16 +287,20 @@ export default function Home() {
           <a href="#jadwal">Jadwal</a>
         </nav>
         <button className="primary-button" onClick={() => setDialogOpen(true)} type="button">
-          Gabung Sekarang
+          Ikut Arisan
         </button>
       </header>
 
       <section className="hero">
         <div className="hero-copy">
-          <h1>Kocokan Piala Dunia</h1>
+          <div className="hero-kicker">
+            <span className="status-light" />
+            DOKU live payment
+          </div>
+          <h1>Undian negara Piala Dunia 2026.</h1>
           <p>
-            Dashboard arisan teman-teman untuk 24 peserta. Setiap peserta dapat 2 negara,
-            assignment disimpan setelah pembayaran, dan daftar negara dibuka saat 24 slot penuh.
+            Satu peserta dapat dua negara. Assignment disimpan setelah pembayaran, tapi negara
+            tetap terkunci sampai semua 24 peserta resmi join.
           </p>
           <div className="hero-actions">
             <button className="primary-button" onClick={() => setDialogOpen(true)} type="button">
@@ -214,51 +310,58 @@ export default function Home() {
               Lihat Jadwal
             </a>
           </div>
+          <div className="match-ticker" aria-label="Pertandingan pembuka">
+            {headlineMatches.map((match) => {
+              const teams = splitMatch(match.label);
+              return (
+                <article key={`${match.date}-${match.label}`}>
+                  <span>{match.date}</span>
+                  <strong>{teams.home}</strong>
+                  <small>vs</small>
+                  <strong>{teams.away}</strong>
+                </article>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="status-panel" aria-label="Tournament draw status">
-          <div className="mode-line">
-            <span>Payment mode</span>
-            <strong>DOKU live</strong>
-          </div>
-          <div className="mode-line storage-line">
-            <span>Storage</span>
-            <strong>Supabase durable</strong>
-          </div>
-          <div className="stats-grid">
-            <div>
-              <strong>{state.participants.length}/{state.maxParticipants}</strong>
-              <span>peserta join</span>
-            </div>
-            <div>
-              <strong>{state.countriesRevealed ? state.takenCountries.length : lockedCountries}/48</strong>
-              <span>{state.countriesRevealed ? "negara terambil" : "negara terkunci"}</span>
-            </div>
-            <div>
-              <strong>{slotsLeft}</strong>
-              <span>slot tersisa</span>
-            </div>
-            <div>
-              <strong>{formatIdr(state.entryFee)}</strong>
-              <span>biaya join</span>
-            </div>
-          </div>
-          <div className="progress-track">
-            <span
-              style={{
-                width: `${Math.min(100, (state.participants.length / state.maxParticipants) * 100)}%`,
-              }}
-            />
-          </div>
+        <PhonePreview
+          participantCount={state.participants.length}
+          maxParticipants={state.maxParticipants}
+          lockedCountries={state.countriesRevealed ? state.takenCountries.length : lockedCountries}
+          slotsLeft={slotsLeft}
+          countriesRevealed={state.countriesRevealed}
+        />
+      </section>
+
+      <section className="summary-strip" aria-label="Ringkasan kocokan">
+        <div>
+          <span>Peserta</span>
+          <strong>{state.participants.length}/{state.maxParticipants}</strong>
+        </div>
+        <div>
+          <span>{state.countriesRevealed ? "Negara terambil" : "Negara terkunci"}</span>
+          <strong>{state.countriesRevealed ? state.takenCountries.length : lockedCountries}/48</strong>
+        </div>
+        <div>
+          <span>Slot tersisa</span>
+          <strong>{slotsLeft}</strong>
+        </div>
+        <div>
+          <span>Biaya join</span>
+          <strong>{formatIdr(state.entryFee)}</strong>
         </div>
       </section>
 
-      <section className="section-grid" id="peserta">
+      <section className="section-block" id="peserta">
         <div className="section-heading">
-          <h2>Peserta dan Negara</h2>
+          <div>
+            <span className="section-icon">01</span>
+            <h2>Daftar Peserta</h2>
+          </div>
           <p>
-            Pembayaran sukses langsung muncul di dashboard. Negara setiap peserta dibuka setelah
-            semua 24 peserta join.
+            Pembayaran sukses langsung masuk dashboard. Negara tiap peserta dibuka hanya saat 24
+            slot sudah penuh.
           </p>
         </div>
         <div className="participants-list">
@@ -271,9 +374,12 @@ export default function Home() {
               countriesRevealed={state.countriesRevealed}
             />
           ))}
-          {Array.from({ length: Math.max(0, Math.min(4, slotsLeft)) }).map((_, index) => (
-            <article className="participant-row empty-row" key={`slot-${index}`}>
+          {Array.from({ length: Math.max(0, Math.min(5, slotsLeft)) }).map((_, index) => (
+            <article className="participant-card empty-row" key={`slot-${index}`}>
               <div className="participant-rank">--</div>
+              <div className="avatar-ring muted-avatar" aria-hidden="true">
+                +
+              </div>
               <div className="participant-name">
                 <strong>Slot tersedia</strong>
                 <span>Menunggu pembayaran peserta berikutnya</span>
@@ -282,26 +388,43 @@ export default function Home() {
             </article>
           ))}
         </div>
+        <div className="fill-panel">
+          <div>
+            <span>Progress undian</span>
+            <strong>{Math.round(progress)}%</strong>
+          </div>
+          <div className="progress-track">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+        </div>
       </section>
 
-      <section className="section-grid" id="grup">
+      <section className="section-block" id="grup">
         <div className="section-heading">
-          <h2>Table Grup World Cup 2026</h2>
-          <p>Negara yang gugur akan tampil dicoret pada chip peserta dan table grup.</p>
+          <div>
+            <span className="section-icon">02</span>
+            <h2>Table Grup World Cup</h2>
+          </div>
+          <p>Ketika turnamen berjalan, negara gugur akan dicoret di peserta dan table grup.</p>
         </div>
         <div className="groups-grid">
           {groups.map((group) => (
             <article className="group-card" key={group.group}>
-              <header>Group {group.group}</header>
-              {group.countries.map((country) => (
+              <header>
+                <strong>Group {group.group}</strong>
+                <span>PTS</span>
+              </header>
+              {group.countries.map((country, index) => (
                 <div
                   className={`group-team ${
                     state.countryStatuses[country.code] === "eliminated" ? "is-eliminated" : ""
                   }`}
                   key={country.code}
                 >
-                  <span>{country.code}</span>
+                  <span>{index + 1}</span>
+                  <em>{country.code}</em>
                   <strong>{country.name}</strong>
+                  <small>0</small>
                 </div>
               ))}
             </article>
@@ -309,32 +432,53 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section-grid schedule-section" id="jadwal">
+      <section className="section-block schedule-section" id="jadwal">
         <div className="section-heading">
-          <h2>Jadwal Lengkap Sampai Final</h2>
-          <p>Fase grup ditampilkan per pertandingan, knockout memakai placeholder resmi tahap.</p>
+          <div>
+            <span className="section-icon">03</span>
+            <h2>Jadwal Sampai Final</h2>
+          </div>
+          <p>Fase grup tampil per match. Knockout memakai tahap resmi sampai final.</p>
         </div>
         <div className="schedule-layout">
           <div className="schedule-column">
-            {nextMatches.map((match) => (
-              <article className="match-row" key={`${match.date}-${match.label}`}>
-                <span>{match.date}</span>
-                <strong>{match.label}</strong>
-                <small>{match.venue}</small>
-              </article>
-            ))}
+            {nextMatches.map((match) => {
+              const teams = splitMatch(match.label);
+              return (
+                <article className="match-row" key={`${match.date}-${match.label}`}>
+                  <span className="match-date">{match.date}</span>
+                  <div className="match-teams">
+                    <strong>{teams.home}</strong>
+                    <small>VS</small>
+                    <strong>{teams.away}</strong>
+                  </div>
+                  <span className="match-stage">{match.stage}</span>
+                  <small className="match-venue">{match.venue}</small>
+                </article>
+              );
+            })}
           </div>
           <div className="schedule-column compact">
             {laterMatches.map((match) => (
               <article className="match-row" key={`${match.date}-${match.label}`}>
-                <span>{match.date}</span>
-                <strong>{match.label}</strong>
-                <small>{match.stage} - {match.venue}</small>
+                <span className="match-date">{match.date}</span>
+                <div className="match-teams single">
+                  <strong>{match.label}</strong>
+                </div>
+                <span className="match-stage">{match.stage}</span>
+                <small className="match-venue">{match.venue}</small>
               </article>
             ))}
           </div>
         </div>
       </section>
+
+      <nav className="bottom-nav" aria-label="Mobile navigation">
+        <a href="#beranda">Home</a>
+        <a href="#peserta">Peserta</a>
+        <a href="#grup">Grup</a>
+        <a href="#jadwal">Jadwal</a>
+      </nav>
 
       <JoinDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onJoined={refresh} />
     </main>
