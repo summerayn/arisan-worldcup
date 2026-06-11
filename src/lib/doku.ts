@@ -112,17 +112,6 @@ export async function createDokuCheckout(input: {
   });
 
   const fetchUrl = `${baseUrl()}${CHECKOUT_TARGET}`;
-  console.error("DOKU request:", {
-    url: fetchUrl,
-    clientId: clientId?.substring(0, 8) + "...",
-    secretKeyLen: secretKey?.length,
-    baseUrl: baseUrl(),
-    hasEnvBaseUrl: !!process.env.DOKU_BASE_URL,
-    bodyLength: body.length,
-    bodyPreview: body.substring(0, 200),
-    signature: signature.signature.substring(0, 20) + "...",
-    digest: signature.digest,
-  });
 
   const response = await fetch(fetchUrl, {
     method: "POST",
@@ -139,13 +128,6 @@ export async function createDokuCheckout(input: {
   });
 
   const responseText = await response.text();
-  console.error("DOKU raw response:", {
-    status: response.status,
-    statusText: response.statusText,
-    contentType: response.headers.get("content-type"),
-    bodyLength: responseText.length,
-    bodyPreview: responseText.substring(0, 300),
-  });
 
   let payload: {
     response?: { payment?: { url?: string } };
