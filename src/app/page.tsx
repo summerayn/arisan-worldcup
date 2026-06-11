@@ -19,8 +19,8 @@ const initialState: PublicState = {
   takenCountries: [],
   availableCountries: countries.map((country) => country.code),
   countryStatuses: Object.fromEntries(countries.map((country) => [country.code, country.status])),
-  mode: "simulated",
-  storage: "memory",
+  mode: "doku",
+  storage: "supabase",
 };
 
 function formatIdr(value: number) {
@@ -112,7 +112,7 @@ function JoinDialog({
         <div className="dialog-head">
           <div>
             <h2 id="join-title">Gabung Kocokan</h2>
-            <p>Isi data, lanjut ke DOKU Checkout atau QRIS simulasi.</p>
+            <p>Isi data, lanjut ke pembayaran DOKU Checkout.</p>
           </div>
           <button className="icon-button" onClick={onClose} type="button" aria-label="Close">
             x
@@ -135,7 +135,7 @@ function JoinDialog({
           <div className="payment-preview">
             <div className="mini-qr" />
             <div>
-              <strong>DOKU Checkout / QRIS</strong>
+              <strong>DOKU Checkout</strong>
               <span>{formatIdr(ENTRY_FEE_IDR)} per peserta</span>
             </div>
           </div>
@@ -208,11 +208,11 @@ export default function Home() {
         <div className="status-panel" aria-label="Tournament draw status">
           <div className="mode-line">
             <span>Payment mode</span>
-            <strong>{state.mode === "doku" ? "DOKU live" : "QRIS simulasi"}</strong>
+            <strong>DOKU live</strong>
           </div>
           <div className="mode-line storage-line">
             <span>Storage</span>
-            <strong>{state.storage === "supabase" ? "Supabase durable" : "Memory demo"}</strong>
+            <strong>Supabase durable</strong>
           </div>
           <div className="stats-grid">
             <div>

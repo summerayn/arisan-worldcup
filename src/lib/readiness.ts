@@ -1,9 +1,7 @@
-import { isDokuConfigured } from "./doku";
-
 export type Readiness = {
   ready: boolean;
-  storage: "memory" | "supabase";
-  payment: "simulated" | "doku";
+  storage: "supabase";
+  payment: "doku";
   checks: {
     supabaseUrl: boolean;
     supabaseServiceRoleKey: boolean;
@@ -15,7 +13,7 @@ export type Readiness = {
   missing: string[];
 };
 
-export function getReadiness(storage: Readiness["storage"]): Readiness {
+export function getReadiness(): Readiness {
   const checks = {
     supabaseUrl: Boolean(process.env.SUPABASE_URL),
     supabaseServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
@@ -37,9 +35,9 @@ export function getReadiness(storage: Readiness["storage"]): Readiness {
     .map(([name]) => name);
 
   return {
-    ready: missing.length === 0 && storage === "supabase" && isDokuConfigured(),
-    storage,
-    payment: isDokuConfigured() ? "doku" : "simulated",
+    ready: missing.length === 0,
+    storage: "supabase",
+    payment: "doku",
     checks,
     missing,
   };

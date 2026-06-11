@@ -26,7 +26,7 @@ export type Order = {
   amount: number;
   status: PaymentStatus;
   paymentUrl: string;
-  provider: "simulated" | "doku";
+  provider: "doku";
   createdAt: string;
   paidAt?: string;
 };
@@ -40,19 +40,8 @@ export type PublicState = {
   takenCountries: string[];
   availableCountries: string[];
   countryStatuses: Record<string, TeamStatus>;
-  mode: "simulated" | "doku";
-  storage: "memory" | "supabase";
-};
-
-type MutableStore = {
-  participants: Participant[];
-  orders: Order[];
-  countryStatuses: Record<string, TeamStatus>;
-};
-
-type GlobalStore = typeof globalThis & {
-  __arisanWorldcupStore?: MutableStore;
-  __arisanWorldcupLock?: Promise<unknown>;
+  mode: "doku";
+  storage: "supabase";
 };
 
 type OrderRow = {
@@ -76,82 +65,17 @@ type ParticipantRow = {
   arisan_country_assignments?: { country_code: string }[];
 };
 
-const globalStore = globalThis as GlobalStore;
-
-function initialStatuses() {
-  return Object.fromEntries(countries.map((country) => [country.code, country.status]));
-}
-
-function initialStore(): MutableStore {
-  return {
-    participants: [
-      {
-        id: "seed-1",
-        name: "Raka",
-        email: "raka@example.com",
-        countries: ["MEX", "JPN"],
-        paidAt: new Date("2026-06-10T11:00:00.000Z").toISOString(),
-        orderId: "seed-order-1",
-      },
-      {
-        id: "seed-2",
-        name: "Dina",
-        email: "dina@example.com",
-        countries: ["BRA", "GHA"],
-        paidAt: new Date("2026-06-10T11:12:00.000Z").toISOString(),
-        orderId: "seed-order-2",
-      },
-      {
-        id: "seed-3",
-        name: "Bimo",
-        email: "bimo@example.com",
-        countries: ["ARG", "KOR"],
-        paidAt: new Date("2026-06-10T11:24:00.000Z").toISOString(),
-        orderId: "seed-order-3",
-      },
-    ],
-    orders: [],
-    countryStatuses: initialStatuses(),
-  };
-}
-
-function getMemoryStore() {
-  if (!globalStore.__arisanWorldcupStore) {
-    globalStore.__arisanWorldcupStore = initialStore();
-  }
-
-  return globalStore.__arisanWorldcupStore;
-}
-
-function isSupabaseConfigured() {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
-}
-
-function supabase() {
+function requireSupabase() {
   const url = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceRoleKey) {
-    throw new Error("Supabase env belum diset.");
+    throw new Error(
+      "Supabase env belum diset. Set SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di Vercel production.",
+    );
   }
-
   return createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-}
-
-async function withMemoryLock<T>(operation: () => Promise<T> | T): Promise<T> {
-  const previous = globalStore.__arisanWorldcupLock ?? Promise.resolve();
-  let release!: () => void;
-  globalStore.__arisanWorldcupLock = new Promise((resolve) => {
-    release = () => resolve(undefined);
-  });
-
-  await previous.catch(() => undefined);
-  try {
-    return await operation();
-  } finally {
-    release();
-  }
 }
 
 function normalizeEmail(email: string) {
@@ -167,13 +91,8 @@ function assertJoinInput(name: string, email: string) {
   }
 }
 
-function shuffle<T>(items: T[]) {
-  const copy = [...items];
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
-  }
-  return copy;
+function initialStatuses() {
+  return Object.fromEntries(countries.map((country) => [country.code, country.status]));
 }
 
 function formatOrder(row: OrderRow): Order {
@@ -205,8 +124,6 @@ function publicStateFromRows(input: {
   participants: Participant[];
   orders: Order[];
   countryStatuses: Record<string, TeamStatus>;
-  mode: PublicState["mode"];
-  storage: PublicState["storage"];
 }): PublicState {
   const takenCountries = input.participants.flatMap((participant) => participant.countries);
   const availableCountries = countries
@@ -222,13 +139,13 @@ function publicStateFromRows(input: {
     takenCountries,
     availableCountries,
     countryStatuses: input.countryStatuses,
-    mode: input.mode,
-    storage: input.storage,
+    mode: "doku",
+    storage: "supabase",
   };
 }
 
-async function getSupabasePublicState(mode: PublicState["mode"]): Promise<PublicState> {
-  const client = supabase();
+export async function getPublicState(): Promise<PublicState> {
+  const client = requireSupabase();
   const [participantsResult, ordersResult, statusesResult] = await Promise.all([
     client
       .from("arisan_participants")
@@ -254,73 +171,45 @@ async function getSupabasePublicState(mode: PublicState["mode"]): Promise<Public
     participants: ((participantsResult.data ?? []) as ParticipantRow[]).map(formatParticipant),
     orders: ((ordersResult.data ?? []) as OrderRow[]).map(formatOrder),
     countryStatuses,
-    mode,
-    storage: "supabase",
-  });
-}
-
-export async function getPublicState(mode: PublicState["mode"] = "simulated"): Promise<PublicState> {
-  if (isSupabaseConfigured()) {
-    return getSupabasePublicState(mode);
-  }
-
-  const store = getMemoryStore();
-  return publicStateFromRows({
-    participants: store.participants,
-    orders: store.orders,
-    countryStatuses: store.countryStatuses,
-    mode,
-    storage: "memory",
   });
 }
 
 export async function findOrder(orderId: string): Promise<Order | undefined> {
-  if (isSupabaseConfigured()) {
-    const { data, error } = await supabase()
-      .from("arisan_orders")
-      .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
-      .eq("id", orderId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return data ? formatOrder(data as OrderRow) : undefined;
-  }
-
-  return getMemoryStore().orders.find((order) => order.id === orderId);
+  const { data, error } = await requireSupabase()
+    .from("arisan_orders")
+    .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? formatOrder(data as OrderRow) : undefined;
 }
 
 export async function updateOrderPaymentUrl(orderId: string, paymentUrl: string) {
-  if (isSupabaseConfigured()) {
-    const { data, error } = await supabase()
-      .from("arisan_orders")
-      .update({ payment_url: paymentUrl })
-      .eq("id", orderId)
-      .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
-      .single();
-    if (error) throw new Error(error.message);
-    return formatOrder(data as OrderRow);
-  }
-
-  return withMemoryLock(() => {
-    const order = getMemoryStore().orders.find((item) => item.id === orderId);
-    if (!order) {
-      throw new Error("Order tidak ditemukan.");
-    }
-    order.paymentUrl = paymentUrl;
-    return order;
-  });
+  const { data, error } = await requireSupabase()
+    .from("arisan_orders")
+    .update({ payment_url: paymentUrl })
+    .eq("id", orderId)
+    .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
+    .single();
+  if (error) throw new Error(error.message);
+  return formatOrder(data as OrderRow);
 }
 
-async function createSupabasePendingOrder(input: {
+export async function createPendingOrder(input: {
   name: string;
   email: string;
-  provider: Order["provider"];
   paymentUrl: string;
 }) {
-  const client = supabase();
+  const name = input.name.trim();
+  const email = normalizeEmail(input.email);
+  assertJoinInput(name, email);
+
+  const client = requireSupabase();
+
   const existingParticipant = await client
     .from("arisan_participants")
     .select("id")
-    .eq("email", input.email)
+    .eq("email", email)
     .maybeSingle();
   if (existingParticipant.error) throw new Error(existingParticipant.error.message);
   if (existingParticipant.data) {
@@ -338,7 +227,7 @@ async function createSupabasePendingOrder(input: {
   const existingPending = await client
     .from("arisan_orders")
     .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
-    .eq("email", input.email)
+    .eq("email", email)
     .eq("status", "pending")
     .maybeSingle();
   if (existingPending.error) throw new Error(existingPending.error.message);
@@ -351,12 +240,12 @@ async function createSupabasePendingOrder(input: {
     .from("arisan_orders")
     .insert({
       id,
-      name: input.name,
-      email: input.email,
+      name,
+      email,
       amount: ENTRY_FEE_IDR,
       status: "pending",
       payment_url: input.paymentUrl.replace("__ORDER_ID__", id),
-      provider: input.provider,
+      provider: "doku",
     })
     .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
     .single();
@@ -366,7 +255,7 @@ async function createSupabasePendingOrder(input: {
       const retry = await client
         .from("arisan_orders")
         .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
-        .eq("email", input.email)
+        .eq("email", email)
         .eq("status", "pending")
         .single();
       if (retry.error) throw new Error(retry.error.message);
@@ -378,55 +267,21 @@ async function createSupabasePendingOrder(input: {
   return formatOrder(inserted.data as OrderRow);
 }
 
-export async function createPendingOrder(input: {
-  name: string;
-  email: string;
-  provider: Order["provider"];
-  paymentUrl: string;
-}) {
-  const name = input.name.trim();
-  const email = normalizeEmail(input.email);
-  assertJoinInput(name, email);
-
-  if (isSupabaseConfigured()) {
-    return createSupabasePendingOrder({ ...input, name, email });
-  }
-
-  return withMemoryLock(() => {
-    const store = getMemoryStore();
-    if (store.participants.some((participant) => participant.email === email)) {
-      throw new Error("Email ini sudah terdaftar sebagai peserta.");
-    }
-
-    if (store.participants.length >= MAX_PARTICIPANTS) {
-      throw new Error("Slot peserta sudah penuh.");
-    }
-
-    const existingPending = store.orders.find(
-      (order) => order.email === email && order.status === "pending",
-    );
-    if (existingPending) {
-      return existingPending;
-    }
-
-    const id = `ARISAN-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
-    const order: Order = {
-      id,
-      name,
-      email,
-      amount: ENTRY_FEE_IDR,
-      status: "pending",
-      paymentUrl: input.paymentUrl.replace("__ORDER_ID__", id),
-      provider: input.provider,
-      createdAt: new Date().toISOString(),
-    };
-    store.orders.push(order);
-    return order;
+export async function markOrderPaid(orderId: string) {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("arisan_mark_order_paid", {
+    p_order_id: orderId,
   });
+  if (error) throw new Error(error.message);
+  const participantId = Array.isArray(data) ? data[0]?.participant_id : data?.participant_id;
+  if (!participantId) {
+    throw new Error("Pembayaran diproses tetapi peserta tidak ditemukan.");
+  }
+  return getParticipantById(participantId);
 }
 
-async function getSupabaseParticipant(participantId: string) {
-  const { data, error } = await supabase()
+async function getParticipantById(participantId: string) {
+  const { data, error } = await requireSupabase()
     .from("arisan_participants")
     .select("id,name,email,order_id,paid_at,arisan_country_assignments(country_code)")
     .eq("id", participantId)
@@ -435,87 +290,16 @@ async function getSupabaseParticipant(participantId: string) {
   return formatParticipant(data as ParticipantRow);
 }
 
-export async function markOrderPaid(orderId: string) {
-  if (isSupabaseConfigured()) {
-    const { data, error } = await supabase().rpc("arisan_mark_order_paid", {
-      p_order_id: orderId,
-    });
-    if (error) throw new Error(error.message);
-    const participantId = Array.isArray(data) ? data[0]?.participant_id : data?.participant_id;
-    if (!participantId) {
-      throw new Error("Pembayaran diproses tetapi peserta tidak ditemukan.");
-    }
-    return getSupabaseParticipant(participantId);
-  }
-
-  return withMemoryLock(() => {
-    const store = getMemoryStore();
-    const order = store.orders.find((item) => item.id === orderId);
-    if (!order) {
-      throw new Error("Order tidak ditemukan.");
-    }
-
-    const existingParticipant = store.participants.find(
-      (participant) => participant.email === order.email,
-    );
-    if (existingParticipant) {
-      order.status = "paid";
-      order.paidAt = existingParticipant.paidAt;
-      return existingParticipant;
-    }
-
-    if (store.participants.length >= MAX_PARTICIPANTS) {
-      throw new Error("Slot peserta sudah penuh.");
-    }
-
-    const taken = new Set(store.participants.flatMap((participant) => participant.countries));
-    const available = countries.map((country) => country.code).filter((code) => !taken.has(code));
-    if (available.length < COUNTRIES_PER_PARTICIPANT) {
-      throw new Error("Negara tersisa tidak cukup.");
-    }
-
-    const assignedCountries = shuffle(available).slice(0, COUNTRIES_PER_PARTICIPANT);
-    const paidAt = new Date().toISOString();
-    const participant: Participant = {
-      id: randomUUID(),
-      name: order.name,
-      email: order.email,
-      countries: assignedCountries,
-      paidAt,
-      orderId,
-    };
-
-    order.status = "paid";
-    order.paidAt = paidAt;
-    store.participants.push(participant);
-    return participant;
-  });
-}
-
 export async function updateCountryStatus(countryCode: string, status: TeamStatus) {
   if (!countries.some((country) => country.code === countryCode)) {
     throw new Error("Kode negara tidak dikenal.");
   }
 
-  if (isSupabaseConfigured()) {
-    const { error } = await supabase().from("arisan_country_status").upsert({
-      country_code: countryCode,
-      status,
-      updated_at: new Date().toISOString(),
-    });
-    if (error) throw new Error(error.message);
-    return { countryCode, status };
-  }
-
-  return withMemoryLock(() => {
-    getMemoryStore().countryStatuses[countryCode] = status;
-    return { countryCode, status };
+  const { error } = await requireSupabase().from("arisan_country_status").upsert({
+    country_code: countryCode,
+    status,
+    updated_at: new Date().toISOString(),
   });
-}
-
-export async function resetDemoStore() {
-  return withMemoryLock(async () => {
-    globalStore.__arisanWorldcupStore = initialStore();
-    return getPublicState();
-  });
+  if (error) throw new Error(error.message);
+  return { countryCode, status };
 }

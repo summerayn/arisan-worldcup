@@ -6,13 +6,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const state = await getPublicState();
-    return NextResponse.json(getReadiness(state.storage));
+    await getPublicState();
+    return NextResponse.json(getReadiness());
   } catch (error) {
-    const readiness = getReadiness("memory");
     return NextResponse.json(
       {
-        ...readiness,
+        ...getReadiness(),
         ready: false,
         error: error instanceof Error ? error.message : "Readiness check gagal.",
       },
