@@ -232,7 +232,7 @@ export async function createPendingOrder(input: {
     .maybeSingle();
   if (existingPending.error) throw new Error(existingPending.error.message);
   if (existingPending.data) {
-    return formatOrder(existingPending.data as OrderRow);
+    return { order: formatOrder(existingPending.data as OrderRow), created: false };
   }
 
   const id = `ARISAN-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -259,12 +259,21 @@ export async function createPendingOrder(input: {
         .eq("status", "pending")
         .single();
       if (retry.error) throw new Error(retry.error.message);
-      return formatOrder(retry.data as OrderRow);
+      return { order: formatOrder(retry.data as OrderRow), created: false };
     }
     throw new Error(inserted.error.message);
   }
 
-  return formatOrder(inserted.data as OrderRow);
+  return { order: formatOrder(inserted.data as OrderRow), created: true };
+}
+
+export async function deletePendingOrder(orderId: string) {
+  const { error } = await requireSupabase()
+    .from("arisan_orders")
+    .delete()
+    .eq("id", orderId)
+    .eq("status", "pending");
+  if (error) throw new Error(error.message);
 }
 
 export async function markOrderPaid(orderId: string) {

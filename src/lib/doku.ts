@@ -143,7 +143,7 @@ export async function createDokuCheckout(input: {
   if (!response.ok || !payload.response?.payment?.url) {
     const message =
       payload.error?.message ?? payload.message?.join(", ") ?? "DOKU checkout gagal dibuat.";
-    throw new Error(message);
+    throw new Error(`${message} (HTTP ${response.status})`);
   }
 
   return payload.response.payment.url;
