@@ -12,11 +12,21 @@ function baseUrl() {
 }
 
 function appUrl() {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.VERCEL_PROJECT_PRODUCTION_URL?.replace(/^/, "https://") ??
-    "http://localhost:3000"
-  );
+  const configured = process.env.NEXT_PUBLIC_APP_URL;
+  if (configured) {
+    // Ensure we only return origin (protocol + host), strip any path
+    try {
+      const url = new URL(configured);
+      return url.origin;
+    } catch {
+      return configured.replace(/\/$/, "");
+    }
+  }
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercelUrl) {
+    return vercelUrl.startsWith("http") ? vercelUrl.replace(/\/$/, "") : `https://${vercelUrl}`.replace(/\/$/, "");
+  }
+  return "http://localhost:3000";
 }
 
 function digest(body: string) {
