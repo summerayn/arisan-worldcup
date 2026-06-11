@@ -122,6 +122,12 @@ export async function createDokuCheckout(input: {
   };
 
   if (!response.ok || !payload.response?.payment?.url) {
+    console.error("DOKU API Error:", {
+      status: response.status,
+      statusText: response.statusText,
+      payload: JSON.stringify(payload),
+      headers: Object.fromEntries(response.headers.entries()),
+    });
     const message =
       payload.error?.message ?? payload.message?.join(", ") ?? "DOKU checkout gagal dibuat.";
     throw new Error(message);
