@@ -1375,13 +1375,16 @@ button {
   vertical-align: middle;
   border-radius: 2px;
   height: 18px;
-  width: auto;
+  width: 27px;
+  object-fit: cover;
 }
 
 .flag-icon.flag-chip {
   height: 26px;
+  width: 39px;
 }
 
 .flag-icon.flag-table {
   height: 22px;
+  width: 33px;
 }
