@@ -177,8 +177,8 @@ button { cursor: pointer; }
 
 .match-ticker article {
   display: grid;
-  grid-template-columns: 50px minmax(0, 1fr) auto;
-  gap: 4px 8px;
+  grid-template-columns: 46px minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 4px 6px;
   align-items: center;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -188,7 +188,7 @@ button { cursor: pointer; }
 }
 
 .match-ticker span { font-size: 11px; font-weight: 800; color: var(--muted); }
-.match-ticker strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.match-ticker strong { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .score-pill {
   display: inline-grid;
@@ -302,14 +302,14 @@ button { cursor: pointer; }
 .phone-match-list { display: grid; gap: 5px; }
 .phone-match-list article {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 4px 6px;
   align-items: center;
   font-size: 12px;
   padding: 4px 0;
 }
 .phone-match-list span { font-size: 10px; color: var(--muted); }
-.phone-match-list strong { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone-match-list strong { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .progress-fill {
   position: absolute;
@@ -839,9 +839,8 @@ button { cursor: pointer; }
     transition: background 120ms, color 120ms;
   }
   .topbar nav a:hover { color: #111; background: var(--lime); }
-  .section-block { grid-template-columns: 260px minmax(0, 1fr); gap: 28px; padding: 38px 0; }
-  .section-heading { position: sticky; top: 86px; align-content: start; }
-  .fill-panel { grid-column: 2; }
+  .section-block { gap: 28px; padding: 38px 0; }
+  .section-heading { position: static; top: auto; }
   .groups-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .schedule-layout { grid-template-columns: 1fr; }
   .match-row { grid-template-columns: 62px 1fr auto; gap: 10px 12px; padding: 12px; }
@@ -863,8 +862,7 @@ button { cursor: pointer; }
   .hero-copy p { font-size: 15px; }
   .live-card h2 { font-size: 22px; }
   .score-board strong { font-size: 34px; }
-  .match-ticker article, .phone-match-list article { grid-template-columns: 42px minmax(0, 1fr) auto; }
-  .match-ticker article strong:last-child, .phone-match-list article strong:last-child { grid-column: 2 / -1; }
+  .match-ticker article, .phone-match-list article { grid-template-columns: 40px minmax(0, 1fr) auto minmax(0, 1fr); }
   .summary-strip strong { font-size: 19px; }
   .match-row { grid-template-columns: 54px minmax(0, 1fr); }
   .match-stage { grid-column: 2; width: fit-content; }
