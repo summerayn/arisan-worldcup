@@ -7,6 +7,7 @@ import {
   calculateGroupStandings,
   countries,
   countryByCode,
+  countryByName,
   groupedCountries,
   matches,
   splitMatchLabel,
@@ -42,6 +43,10 @@ function splitMatch(label: string) {
   return splitMatchLabel(label);
 }
 
+function teamFlag(name: string) {
+  return countryByName(name)?.flag ?? "";
+}
+
 function censorEmail(email: string): string {
   const [local, domain] = email.split("@");
   if (!domain) return "***@***";
@@ -68,7 +73,7 @@ function TeamChip({ code, status }: { code: string; status: "alive" | "eliminate
 
   return (
     <span className={`team-chip ${status === "eliminated" ? "is-eliminated" : ""}`}>
-      <span className="team-code">{country.code}</span>
+      <span className="team-code">{country.flag}</span>
       <span>{country.name}</span>
     </span>
   );
@@ -362,11 +367,11 @@ function PhonePreview({
           return (
             <article key={`${match.date}-${match.label}`}>
               <span>{match.date}</span>
-              <strong>{teams.home}</strong>
+              <strong>{teamFlag(teams.home)} {teams.home}</strong>
               <small className={match.status === "finished" ? "score-pill is-final" : ""}>
                 {formatScore(match)}
               </small>
-              <strong>{teams.away}</strong>
+              <strong>{teamFlag(teams.away)} {teams.away}</strong>
             </article>
           );
         })}
@@ -501,11 +506,11 @@ export default function Home() {
               return (
                 <article key={`${match.date}-${match.label}`}>
                   <span>{match.date}</span>
-                  <strong>{teams.home}</strong>
+                  <strong>{teamFlag(teams.home)} {teams.home}</strong>
                   <small className={match.status === "finished" ? "score-pill is-final" : ""}>
                     {formatScore(match)}
                   </small>
-                  <strong>{teams.away}</strong>
+                  <strong>{teamFlag(teams.away)} {teams.away}</strong>
                 </article>
               );
             })}
@@ -615,7 +620,7 @@ export default function Home() {
                   key={country.code}
                 >
                   <span>{index + 1}</span>
-                  <em>{country.code}</em>
+                  <em>{country.flag}</em>
                   <strong>{country.name}</strong>
                   <small>{standing.points}</small>
                 </div>
@@ -642,11 +647,11 @@ export default function Home() {
                 <article className="match-row" key={`${match.date}-${match.label}`}>
                   <span className="match-date">{match.date}</span>
                   <div className="match-teams">
-                    <strong>{teams.home}</strong>
+                    <strong>{teamFlag(teams.home)} {teams.home}</strong>
                     <small className={match.status === "finished" ? "score-pill is-final" : ""}>
                       {formatScore(match)}
                     </small>
-                    <strong>{teams.away}</strong>
+                    <strong>{teamFlag(teams.away)} {teams.away}</strong>
                   </div>
                   <span className="match-stage">
                     {match.status === "finished" ? "Final" : match.stage}
