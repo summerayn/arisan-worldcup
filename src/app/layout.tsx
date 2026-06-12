@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kocokan Piala Dunia",
-  description: "Dashboard arisan World Cup 2026 dengan DOKU Checkout dan kocokan negara unik.",
+  title: "KP2026",
+  description: "Dashboard registrasi",
 };
 
 export default function RootLayout({
