@@ -4,8 +4,8 @@ export type MatchStatus = "scheduled" | "live" | "finished";
 
 export type Country = {
   code: string;
+  iso2: string;
   name: string;
-  flag: string;
   group: string;
   status: TeamStatus;
   drawBucket: DrawBucket;
@@ -38,78 +38,66 @@ export const MAX_PARTICIPANTS = 24;
 export const COUNTRIES_PER_PARTICIPANT = 2;
 export const ENTRY_FEE_IDR = 100000;
 
+export function flagUrl(iso2: string, size = 80) {
+  return `https://flagcdn.com/w${size}/${iso2}.png`;
+}
+
 export const countries: Country[] = [
-  { code: "MEX", name: "Mexico", flag: "🇲🇽", group: "A", status: "alive", drawBucket: "favorite", oddsRank: 13 },
-  { code: "RSA", name: "South Africa", flag: "🇿🇦", group: "A", status: "alive", drawBucket: "least_favorite", oddsRank: 41 },
-  { code: "KOR", name: "Korea Republic", flag: "🇰🇷", group: "A", status: "alive", drawBucket: "favorite", oddsRank: 23 },
-  { code: "CZE", name: "Czechia", flag: "🇨🇿", group: "A", status: "alive", drawBucket: "least_favorite", oddsRank: 31 },
-  { code: "CAN", name: "Canada", flag: "🇨🇦", group: "B", status: "alive", drawBucket: "least_favorite", oddsRank: 29 },
-  { code: "BIH", name: "Bosnia and Herzegovina", flag: "🇧🇦", group: "B", status: "alive", drawBucket: "least_favorite", oddsRank: 39 },
-  { code: "QAT", name: "Qatar", flag: "🇶🇦", group: "B", status: "alive", drawBucket: "least_favorite", oddsRank: 45 },
-  { code: "SUI", name: "Switzerland", flag: "🇨🇭", group: "B", status: "alive", drawBucket: "favorite", oddsRank: 15 },
-  { code: "BRA", name: "Brazil", flag: "🇧🇷", group: "C", status: "alive", drawBucket: "favorite", oddsRank: 5 },
-  { code: "MAR", name: "Morocco", flag: "🇲🇦", group: "C", status: "alive", drawBucket: "favorite", oddsRank: 16 },
-  { code: "HAI", name: "Haiti", flag: "🇭🇹", group: "C", status: "alive", drawBucket: "least_favorite", oddsRank: 48 },
-  { code: "SCO", name: "Scotland", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", group: "C", status: "alive", drawBucket: "least_favorite", oddsRank: 30 },
-  { code: "USA", name: "United States", flag: "🇺🇸", group: "D", status: "alive", drawBucket: "favorite", oddsRank: 12 },
-  { code: "PAR", name: "Paraguay", flag: "🇵🇾", group: "D", status: "alive", drawBucket: "least_favorite", oddsRank: 34 },
-  { code: "AUS", name: "Australia", flag: "🇦🇺", group: "D", status: "alive", drawBucket: "least_favorite", oddsRank: 32 },
-  { code: "TUR", name: "Turkiye", flag: "🇹🇷", group: "D", status: "alive", drawBucket: "favorite", oddsRank: 20 },
-  { code: "GER", name: "Germany", flag: "🇩🇪", group: "E", status: "alive", drawBucket: "favorite", oddsRank: 7 },
-  { code: "CUW", name: "Curacao", flag: "🇨🇼", group: "E", status: "alive", drawBucket: "least_favorite", oddsRank: 47 },
-  { code: "CIV", name: "Ivory Coast", flag: "🇨🇮", group: "E", status: "alive", drawBucket: "favorite", oddsRank: 24 },
-  { code: "ECU", name: "Ecuador", flag: "🇪🇨", group: "E", status: "alive", drawBucket: "favorite", oddsRank: 19 },
-  { code: "NED", name: "Netherlands", flag: "🇳🇱", group: "F", status: "alive", drawBucket: "favorite", oddsRank: 8 },
-  { code: "JPN", name: "Japan", flag: "🇯🇵", group: "F", status: "alive", drawBucket: "favorite", oddsRank: 18 },
-  { code: "SWE", name: "Sweden", flag: "🇸🇪", group: "F", status: "alive", drawBucket: "least_favorite", oddsRank: 28 },
-  { code: "TUN", name: "Tunisia", flag: "🇹🇳", group: "F", status: "alive", drawBucket: "least_favorite", oddsRank: 37 },
-  { code: "BEL", name: "Belgium", flag: "🇧🇪", group: "G", status: "alive", drawBucket: "favorite", oddsRank: 9 },
-  { code: "EGY", name: "Egypt", flag: "🇪🇬", group: "G", status: "alive", drawBucket: "least_favorite", oddsRank: 26 },
-  { code: "IRN", name: "Iran", flag: "🇮🇷", group: "G", status: "alive", drawBucket: "least_favorite", oddsRank: 33 },
-  { code: "NZL", name: "New Zealand", flag: "🇳🇿", group: "G", status: "alive", drawBucket: "least_favorite", oddsRank: 46 },
-  { code: "ESP", name: "Spain", flag: "🇪🇸", group: "H", status: "alive", drawBucket: "favorite", oddsRank: 1 },
-  { code: "CPV", name: "Cape Verde", flag: "🇨🇻", group: "H", status: "alive", drawBucket: "least_favorite", oddsRank: 44 },
-  { code: "KSA", name: "Saudi Arabia", flag: "🇸🇦", group: "H", status: "alive", drawBucket: "least_favorite", oddsRank: 38 },
-  { code: "URU", name: "Uruguay", flag: "🇺🇾", group: "H", status: "alive", drawBucket: "favorite", oddsRank: 11 },
-  { code: "FRA", name: "France", flag: "🇫🇷", group: "I", status: "alive", drawBucket: "favorite", oddsRank: 2 },
-  { code: "SEN", name: "Senegal", flag: "🇸🇳", group: "I", status: "alive", drawBucket: "favorite", oddsRank: 22 },
-  { code: "IRQ", name: "Iraq", flag: "🇮🇶", group: "I", status: "alive", drawBucket: "least_favorite", oddsRank: 42 },
-  { code: "NOR", name: "Norway", flag: "🇳🇴", group: "I", status: "alive", drawBucket: "favorite", oddsRank: 10 },
-  { code: "ARG", name: "Argentina", flag: "🇦🇷", group: "J", status: "alive", drawBucket: "favorite", oddsRank: 6 },
-  { code: "ALG", name: "Algeria", flag: "🇩🇿", group: "J", status: "alive", drawBucket: "least_favorite", oddsRank: 25 },
-  { code: "AUT", name: "Austria", flag: "🇦🇹", group: "J", status: "alive", drawBucket: "favorite", oddsRank: 21 },
-  { code: "JOR", name: "Jordan", flag: "🇯🇴", group: "J", status: "alive", drawBucket: "least_favorite", oddsRank: 43 },
-  { code: "POR", name: "Portugal", flag: "🇵🇹", group: "K", status: "alive", drawBucket: "favorite", oddsRank: 4 },
-  { code: "COD", name: "DR Congo", flag: "🇨🇩", group: "K", status: "alive", drawBucket: "least_favorite", oddsRank: 40 },
-  { code: "UZB", name: "Uzbekistan", flag: "🇺🇿", group: "K", status: "alive", drawBucket: "least_favorite", oddsRank: 35 },
-  { code: "COL", name: "Colombia", flag: "🇨🇴", group: "K", status: "alive", drawBucket: "favorite", oddsRank: 14 },
-  { code: "ENG", name: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", group: "L", status: "alive", drawBucket: "favorite", oddsRank: 3 },
-  { code: "CRO", name: "Croatia", flag: "🇭🇷", group: "L", status: "alive", drawBucket: "favorite", oddsRank: 17 },
-  { code: "GHA", name: "Ghana", flag: "🇬🇭", group: "L", status: "alive", drawBucket: "least_favorite", oddsRank: 27 },
-  { code: "PAN", name: "Panama", flag: "🇵🇦", group: "L", status: "alive", drawBucket: "least_favorite", oddsRank: 36 },
+  { code: "MEX", iso2: "mx", name: "Mexico", group: "A", status: "alive", drawBucket: "favorite", oddsRank: 13 },
+  { code: "RSA", iso2: "za", name: "South Africa", group: "A", status: "alive", drawBucket: "least_favorite", oddsRank: 41 },
+  { code: "KOR", iso2: "kr", name: "Korea Republic", group: "A", status: "alive", drawBucket: "favorite", oddsRank: 23 },
+  { code: "CZE", iso2: "cz", name: "Czechia", group: "A", status: "alive", drawBucket: "least_favorite", oddsRank: 31 },
+  { code: "CAN", iso2: "ca", name: "Canada", group: "B", status: "alive", drawBucket: "least_favorite", oddsRank: 29 },
+  { code: "BIH", iso2: "ba", name: "Bosnia and Herzegovina", group: "B", status: "alive", drawBucket: "least_favorite", oddsRank: 39 },
+  { code: "QAT", iso2: "qa", name: "Qatar", group: "B", status: "alive", drawBucket: "least_favorite", oddsRank: 45 },
+  { code: "SUI", iso2: "ch", name: "Switzerland", group: "B", status: "alive", drawBucket: "favorite", oddsRank: 15 },
+  { code: "BRA", iso2: "br", name: "Brazil", group: "C", status: "alive", drawBucket: "favorite", oddsRank: 5 },
+  { code: "MAR", iso2: "ma", name: "Morocco", group: "C", status: "alive", drawBucket: "favorite", oddsRank: 16 },
+  { code: "HAI", iso2: "ht", name: "Haiti", group: "C", status: "alive", drawBucket: "least_favorite", oddsRank: 48 },
+  { code: "SCO", iso2: "gb-sct", name: "Scotland", group: "C", status: "alive", drawBucket: "least_favorite", oddsRank: 30 },
+  { code: "USA", iso2: "us", name: "United States", group: "D", status: "alive", drawBucket: "favorite", oddsRank: 12 },
+  { code: "PAR", iso2: "py", name: "Paraguay", group: "D", status: "alive", drawBucket: "least_favorite", oddsRank: 34 },
+  { code: "AUS", iso2: "au", name: "Australia", group: "D", status: "alive", drawBucket: "least_favorite", oddsRank: 32 },
+  { code: "TUR", iso2: "tr", name: "Turkiye", group: "D", status: "alive", drawBucket: "favorite", oddsRank: 20 },
+  { code: "GER", iso2: "de", name: "Germany", group: "E", status: "alive", drawBucket: "favorite", oddsRank: 7 },
+  { code: "CUW", iso2: "cw", name: "Curacao", group: "E", status: "alive", drawBucket: "least_favorite", oddsRank: 47 },
+  { code: "CIV", iso2: "ci", name: "Ivory Coast", group: "E", status: "alive", drawBucket: "favorite", oddsRank: 24 },
+  { code: "ECU", iso2: "ec", name: "Ecuador", group: "E", status: "alive", drawBucket: "favorite", oddsRank: 19 },
+  { code: "NED", iso2: "nl", name: "Netherlands", group: "F", status: "alive", drawBucket: "favorite", oddsRank: 8 },
+  { code: "JPN", iso2: "jp", name: "Japan", group: "F", status: "alive", drawBucket: "favorite", oddsRank: 18 },
+  { code: "SWE", iso2: "se", name: "Sweden", group: "F", status: "alive", drawBucket: "least_favorite", oddsRank: 28 },
+  { code: "TUN", iso2: "tn", name: "Tunisia", group: "F", status: "alive", drawBucket: "least_favorite", oddsRank: 37 },
+  { code: "BEL", iso2: "be", name: "Belgium", group: "G", status: "alive", drawBucket: "favorite", oddsRank: 9 },
+  { code: "EGY", iso2: "eg", name: "Egypt", group: "G", status: "alive", drawBucket: "least_favorite", oddsRank: 26 },
+  { code: "IRN", iso2: "ir", name: "Iran", group: "G", status: "alive", drawBucket: "least_favorite", oddsRank: 33 },
+  { code: "NZL", iso2: "nz", name: "New Zealand", group: "G", status: "alive", drawBucket: "least_favorite", oddsRank: 46 },
+  { code: "ESP", iso2: "es", name: "Spain", group: "H", status: "alive", drawBucket: "favorite", oddsRank: 1 },
+  { code: "CPV", iso2: "cv", name: "Cape Verde", group: "H", status: "alive", drawBucket: "least_favorite", oddsRank: 44 },
+  { code: "KSA", iso2: "sa", name: "Saudi Arabia", group: "H", status: "alive", drawBucket: "least_favorite", oddsRank: 38 },
+  { code: "URU", iso2: "uy", name: "Uruguay", group: "H", status: "alive", drawBucket: "favorite", oddsRank: 11 },
+  { code: "FRA", iso2: "fr", name: "France", group: "I", status: "alive", drawBucket: "favorite", oddsRank: 2 },
+  { code: "SEN", iso2: "sn", name: "Senegal", group: "I", status: "alive", drawBucket: "favorite", oddsRank: 22 },
+  { code: "IRQ", iso2: "iq", name: "Iraq", group: "I", status: "alive", drawBucket: "least_favorite", oddsRank: 42 },
+  { code: "NOR", iso2: "no", name: "Norway", group: "I", status: "alive", drawBucket: "favorite", oddsRank: 10 },
+  { code: "ARG", iso2: "ar", name: "Argentina", group: "J", status: "alive", drawBucket: "favorite", oddsRank: 6 },
+  { code: "ALG", iso2: "dz", name: "Algeria", group: "J", status: "alive", drawBucket: "least_favorite", oddsRank: 25 },
+  { code: "AUT", iso2: "at", name: "Austria", group: "J", status: "alive", drawBucket: "favorite", oddsRank: 21 },
+  { code: "JOR", iso2: "jo", name: "Jordan", group: "J", status: "alive", drawBucket: "least_favorite", oddsRank: 43 },
+  { code: "POR", iso2: "pt", name: "Portugal", group: "K", status: "alive", drawBucket: "favorite", oddsRank: 4 },
+  { code: "COD", iso2: "cd", name: "DR Congo", group: "K", status: "alive", drawBucket: "least_favorite", oddsRank: 40 },
+  { code: "UZB", iso2: "uz", name: "Uzbekistan", group: "K", status: "alive", drawBucket: "least_favorite", oddsRank: 35 },
+  { code: "COL", iso2: "co", name: "Colombia", group: "K", status: "alive", drawBucket: "favorite", oddsRank: 14 },
+  { code: "ENG", iso2: "gb-eng", name: "England", group: "L", status: "alive", drawBucket: "favorite", oddsRank: 3 },
+  { code: "CRO", iso2: "hr", name: "Croatia", group: "L", status: "alive", drawBucket: "favorite", oddsRank: 17 },
+  { code: "GHA", iso2: "gh", name: "Ghana", group: "L", status: "alive", drawBucket: "least_favorite", oddsRank: 27 },
+  { code: "PAN", iso2: "pa", name: "Panama", group: "L", status: "alive", drawBucket: "least_favorite", oddsRank: 36 },
 ];
 
 export const groupOrder = "ABCDEFGHIJKL".split("");
 
 export const matches: Match[] = [
-  {
-    date: "Jun 11",
-    stage: "Group",
-    label: "Mexico vs South Africa",
-    venue: "Mexico City Stadium",
-    status: "finished",
-    homeScore: 2,
-    awayScore: 0,
-  },
-  {
-    date: "Jun 11",
-    stage: "Group",
-    label: "Korea Republic vs Czechia",
-    venue: "Estadio Guadalajara",
-    status: "finished",
-    homeScore: 2,
-    awayScore: 1,
-  },
+  { date: "Jun 11", stage: "Group", label: "Mexico vs South Africa", venue: "Mexico City Stadium", status: "finished", homeScore: 2, awayScore: 0 },
+  { date: "Jun 11", stage: "Group", label: "Korea Republic vs Czechia", venue: "Estadio Guadalajara", status: "finished", homeScore: 2, awayScore: 1 },
   { date: "Jun 12", stage: "Group", label: "Canada vs Bosnia and Herzegovina", venue: "Toronto Stadium" },
   { date: "Jun 12", stage: "Group", label: "United States vs Paraguay", venue: "Los Angeles Stadium" },
   { date: "Jun 13", stage: "Group", label: "Qatar vs Switzerland", venue: "San Francisco Bay Area Stadium" },
@@ -220,15 +208,11 @@ export function countryByName(name: string) {
 }
 
 export function matchTeams(match: Pick<Match, "label" | "stage">) {
-  if (match.stage !== "Group") {
-    return null;
-  }
+  if (match.stage !== "Group") return null;
   const { home, away } = splitMatchLabel(match.label);
   const homeCountry = countryByName(home);
   const awayCountry = countryByName(away);
-  if (!homeCountry || !awayCountry) {
-    return null;
-  }
+  if (!homeCountry || !awayCountry) return null;
   return { home: homeCountry, away: awayCountry };
 }
 
@@ -236,59 +220,22 @@ export function calculateGroupStandings(inputMatches: Match[] = matches) {
   const rows = Object.fromEntries(
     countries.map((country) => [
       country.code,
-      {
-        code: country.code,
-        played: 0,
-        won: 0,
-        drawn: 0,
-        lost: 0,
-        goalsFor: 0,
-        goalsAgainst: 0,
-        goalDifference: 0,
-        points: 0,
-      } satisfies StandingRow,
+      { code: country.code, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0 } satisfies StandingRow,
     ]),
   );
 
   for (const match of inputMatches) {
-    if (
-      match.stage !== "Group" ||
-      match.status !== "finished" ||
-      typeof match.homeScore !== "number" ||
-      typeof match.awayScore !== "number"
-    ) {
-      continue;
-    }
-
+    if (match.stage !== "Group" || match.status !== "finished" || typeof match.homeScore !== "number" || typeof match.awayScore !== "number") continue;
     const teams = matchTeams(match);
-    if (!teams) {
-      continue;
-    }
-
+    if (!teams) continue;
     const home = rows[teams.home.code];
     const away = rows[teams.away.code];
-    home.played += 1;
-    away.played += 1;
-    home.goalsFor += match.homeScore;
-    home.goalsAgainst += match.awayScore;
-    away.goalsFor += match.awayScore;
-    away.goalsAgainst += match.homeScore;
-
-    if (match.homeScore > match.awayScore) {
-      home.won += 1;
-      home.points += 3;
-      away.lost += 1;
-    } else if (match.homeScore < match.awayScore) {
-      away.won += 1;
-      away.points += 3;
-      home.lost += 1;
-    } else {
-      home.drawn += 1;
-      away.drawn += 1;
-      home.points += 1;
-      away.points += 1;
-    }
-
+    home.played += 1; away.played += 1;
+    home.goalsFor += match.homeScore; home.goalsAgainst += match.awayScore;
+    away.goalsFor += match.awayScore; away.goalsAgainst += match.homeScore;
+    if (match.homeScore > match.awayScore) { home.won += 1; home.points += 3; away.lost += 1; }
+    else if (match.homeScore < match.awayScore) { away.won += 1; away.points += 3; home.lost += 1; }
+    else { home.drawn += 1; away.drawn += 1; home.points += 1; away.points += 1; }
     home.goalDifference = home.goalsFor - home.goalsAgainst;
     away.goalDifference = away.goalsFor - away.goalsAgainst;
   }
@@ -296,16 +243,9 @@ export function calculateGroupStandings(inputMatches: Match[] = matches) {
   return Object.fromEntries(
     groupOrder.map((group) => [
       group,
-      countries
-        .filter((country) => country.group === group)
-        .map((country) => rows[country.code])
-        .sort(
-          (a, b) =>
-            b.points - a.points ||
-            b.goalDifference - a.goalDifference ||
-            b.goalsFor - a.goalsFor ||
-            a.code.localeCompare(b.code),
-        ),
+      countries.filter((c) => c.group === group).map((c) => rows[c.code]).sort(
+        (a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.code.localeCompare(b.code),
+      ),
     ]),
   ) as Record<string, StandingRow[]>;
 }

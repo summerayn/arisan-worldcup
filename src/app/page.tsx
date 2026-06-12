@@ -8,6 +8,7 @@ import {
   countries,
   countryByCode,
   countryByName,
+  flagUrl,
   groupedCountries,
   matches,
   splitMatchLabel,
@@ -44,7 +45,12 @@ function splitMatch(label: string) {
 }
 
 function teamFlag(name: string) {
-  return countryByName(name)?.flag ?? "";
+  return countryByName(name)?.iso2 ?? "";
+}
+
+function teamFlagImg(iso2: string, size = 24) {
+  if (!iso2) return null;
+  return <img src={flagUrl(iso2, size)} alt="" width={size} height={Math.round(size * 0.67)} style={{ verticalAlign: "middle", borderRadius: "2px" }} />;
 }
 
 function censorEmail(email: string): string {
@@ -73,7 +79,9 @@ function TeamChip({ code, status }: { code: string; status: "alive" | "eliminate
 
   return (
     <span className={`team-chip ${status === "eliminated" ? "is-eliminated" : ""}`}>
-      <span className="team-code">{country.flag}</span>
+      <span className="team-code">
+        <img src={flagUrl(country.iso2, 32)} alt="" width={32} height={22} style={{ borderRadius: "2px" }} />
+      </span>
       <span>{country.name}</span>
     </span>
   );
@@ -367,11 +375,11 @@ function PhonePreview({
           return (
             <article key={`${match.date}-${match.label}`}>
               <span>{match.date}</span>
-              <strong>{teamFlag(teams.home)} {teams.home}</strong>
+              <strong>{teamFlagImg(teamFlag(teams.home))} {teams.home}</strong>
               <small className={match.status === "finished" ? "score-pill is-final" : ""}>
                 {formatScore(match)}
               </small>
-              <strong>{teamFlag(teams.away)} {teams.away}</strong>
+              <strong>{teamFlagImg(teamFlag(teams.away))} {teams.away}</strong>
             </article>
           );
         })}
@@ -506,11 +514,11 @@ export default function Home() {
               return (
                 <article key={`${match.date}-${match.label}`}>
                   <span>{match.date}</span>
-                  <strong>{teamFlag(teams.home)} {teams.home}</strong>
+                  <strong>{teamFlagImg(teamFlag(teams.home))} {teams.home}</strong>
                   <small className={match.status === "finished" ? "score-pill is-final" : ""}>
                     {formatScore(match)}
                   </small>
-                  <strong>{teamFlag(teams.away)} {teams.away}</strong>
+                  <strong>{teamFlagImg(teamFlag(teams.away))} {teams.away}</strong>
                 </article>
               );
             })}
@@ -620,7 +628,7 @@ export default function Home() {
                   key={country.code}
                 >
                   <span>{index + 1}</span>
-                  <em>{country.flag}</em>
+                  <em><img src={flagUrl(country.iso2, 28)} alt="" width={28} height={19} style={{ borderRadius: "2px", verticalAlign: "middle" }} /></em>
                   <strong>{country.name}</strong>
                   <small>{standing.points}</small>
                 </div>
@@ -647,11 +655,11 @@ export default function Home() {
                 <article className="match-row" key={`${match.date}-${match.label}`}>
                   <span className="match-date">{match.date}</span>
                   <div className="match-teams">
-                    <strong>{teamFlag(teams.home)} {teams.home}</strong>
+                    <strong>{teamFlagImg(teamFlag(teams.home))} {teams.home}</strong>
                     <small className={match.status === "finished" ? "score-pill is-final" : ""}>
                       {formatScore(match)}
                     </small>
-                    <strong>{teamFlag(teams.away)} {teams.away}</strong>
+                    <strong>{teamFlagImg(teamFlag(teams.away))} {teams.away}</strong>
                   </div>
                   <span className="match-stage">
                     {match.status === "finished" ? "Final" : match.stage}
