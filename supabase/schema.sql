@@ -5,7 +5,7 @@ create table if not exists arisan_orders (
   amount integer not null,
   status text not null check (status in ('pending', 'paid', 'expired', 'failed')),
   payment_url text not null,
-  provider text not null check (provider in ('simulated', 'doku')),
+  provider text not null check (provider in ('simulated', 'doku', 'manual')),
   created_at timestamptz not null default now(),
   paid_at timestamptz
 );

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ENTRY_FEE_IDR,
   calculateGroupStandings,
@@ -135,6 +136,8 @@ function JoinDialog({
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<"doku" | "manual">("doku");
+  const [manualSubmitted, setManualSubmitted] = useState(false);
 
   if (!open) {
     return null;
@@ -148,9 +151,13 @@ function JoinDialog({
     const response = await fetch("/api/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email }),
+      body: JSON.stringify({ name, email, mode: paymentMode }),
     });
-    const payload = (await response.json()) as { order?: { paymentUrl: string }; error?: string };
+    const payload = (await response.json()) as {
+      order?: { paymentUrl: string };
+      manual?: boolean;
+      error?: string;
+    };
 
     setSubmitting(false);
     if (!response.ok || !payload.order) {
@@ -158,8 +165,56 @@ function JoinDialog({
       return;
     }
 
+    if (payload.manual) {
+      setManualSubmitted(true);
+      onJoined();
+      return;
+    }
+
     onJoined();
     window.location.href = payload.order.paymentUrl;
+  }
+
+  function close() {
+    setManualSubmitted(false);
+    setPaymentMode("doku");
+    onClose();
+  }
+
+  // Success view after manual payment registration
+  if (manualSubmitted) {
+    return (
+      <div className="dialog-backdrop" role="presentation">
+        <div className="dialog" role="dialog" aria-modal="true">
+          <div className="dialog-head">
+            <div>
+              <h2>Pendaftaran Manual Berhasil!</h2>
+              <p>Order kamu sudah tercatat. Silakan transfer ke QRIS di bawah dan tunggu konfirmasi admin.</p>
+            </div>
+            <button className="icon-button" onClick={close} type="button" aria-label="Close">
+              x
+            </button>
+          </div>
+          <div className="manual-success-body">
+            <img src="/qris.svg" alt="QRIS pembayaran" className="qris-display" />
+            <div className="manual-instructions">
+              <strong>Cara bayar:</strong>
+              <ol>
+                <li>Scan QRIS pakai app banking/e-wallet kamu</li>
+                <li>Transfer <strong>{formatIdr(ENTRY_FEE_IDR)}</strong></li>
+                <li>Admin akan verifikasi dan unlock negara kamu</li>
+              </ol>
+              <span className="fine-print">
+                Pembayaran dicek berkala. Begitu dikonfirmasi, 2 negara langsung dikunci buat kamu. Refresh dashboard untuk lihat status.
+              </span>
+            </div>
+            <button className="primary-button wide" onClick={close} type="button">
+              Kembali ke Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -168,12 +223,41 @@ function JoinDialog({
         <div className="dialog-head">
           <div>
             <h2 id="join-title">Gabung Kocokan</h2>
-            <p>Isi data, lanjut ke pembayaran DOKU Checkout.</p>
+            <p>Isi data, pilih metode bayar, lanjut ke pembayaran.</p>
           </div>
-          <button className="icon-button" onClick={onClose} type="button" aria-label="Close">
+          <button className="icon-button" onClick={close} type="button" aria-label="Close">
             x
           </button>
         </div>
+
+        {/* Payment mode selector */}
+        <div className="payment-mode-tabs">
+          <button
+            className={`mode-tab ${paymentMode === "doku" ? "is-active" : ""}`}
+            onClick={() => setPaymentMode("doku")}
+            type="button"
+          >
+            DOKU Checkout
+          </button>
+          <button
+            className={`mode-tab ${paymentMode === "manual" ? "is-active" : ""}`}
+            onClick={() => setPaymentMode("manual")}
+            type="button"
+          >
+            Transfer Manual
+          </button>
+        </div>
+
+        {paymentMode === "manual" && (
+          <div className="manual-preview">
+            <img src="/qris.svg" alt="QRIS" className="qris-mini" />
+            <div>
+              <strong>QRIS Transfer</strong>
+              <span>Scan QR di bawah, isi data, klik Konfirmasi. Admin akan approve pembayaran kamu.</span>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={submit} className="join-form">
           <label>
             Nama
@@ -191,13 +275,26 @@ function JoinDialog({
           <div className="payment-preview">
             <div className="mini-qr" />
             <div>
-              <strong>DOKU Checkout</strong>
-              <span>{formatIdr(ENTRY_FEE_IDR)} per peserta</span>
+              {paymentMode === "manual" ? (
+                <>
+                  <strong>Transfer QRIS</strong>
+                  <span>{formatIdr(ENTRY_FEE_IDR)} per peserta</span>
+                </>
+              ) : (
+                <>
+                  <strong>DOKU Checkout</strong>
+                  <span>{formatIdr(ENTRY_FEE_IDR)} per peserta</span>
+                </>
+              )}
             </div>
           </div>
           {error ? <p className="form-error">{error}</p> : null}
           <button className="primary-button wide" disabled={submitting} type="submit">
-            {submitting ? "Membuat pembayaran..." : "Lanjut Bayar"}
+            {submitting
+              ? "Membuat pembayaran..."
+              : paymentMode === "manual"
+                ? "Konfirmasi Pembayaran"
+                : "Lanjut Bayar"}
           </button>
         </form>
       </div>
@@ -295,12 +392,20 @@ export default function Home() {
 
   function checkPassword(event: FormEvent) {
     event.preventDefault();
-    if (passwordInput === "freekickCR7") {
-      setAuthenticated(true);
-      setPasswordError("");
-    } else {
-      setPasswordError("Password salah.");
-    }
+    fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: passwordInput }),
+    }).then((r) => r.json()).then((data) => {
+      if (data.valid) {
+        setAuthenticated(true);
+        setPasswordError("");
+      } else {
+        setPasswordError("Password salah.");
+      }
+    }).catch(() => {
+      setPasswordError("Gagal verifikasi. Coba lagi.");
+    });
   }
 
   useEffect(() => {
@@ -363,6 +468,7 @@ export default function Home() {
           <a href="#peserta">Peserta</a>
           <a href="#grup">Grup</a>
           <a href="#jadwal">Jadwal</a>
+          <Link href="/admin">Admin</Link>
         </nav>
         <button className="primary-button" onClick={() => setDialogOpen(true)} type="button">
           Ikut Arisan
@@ -579,6 +685,7 @@ export default function Home() {
         <a href="#peserta">Peserta</a>
         <a href="#grup">Grup</a>
         <a href="#jadwal">Jadwal</a>
+        <Link href="/admin">Admin</Link>
       </nav>
 
       <JoinDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onJoined={refresh} />

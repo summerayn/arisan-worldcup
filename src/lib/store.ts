@@ -343,6 +343,7 @@ export async function createPendingOrder(input: {
   name: string;
   email: string;
   paymentUrl: string;
+  provider?: "doku" | "manual";
 }) {
   const name = input.name.trim();
   const email = normalizeEmail(input.email);
@@ -389,7 +390,7 @@ export async function createPendingOrder(input: {
       amount: ENTRY_FEE_IDR,
       status: "pending",
       payment_url: input.paymentUrl.replace("__ORDER_ID__", id),
-      provider: "doku",
+      provider: input.provider ?? "doku",
     })
     .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
     .single();
@@ -518,4 +519,15 @@ export async function syncLiveScoresFromEspn() {
     persistError,
     matches: updates,
   };
+}
+
+export async function listPendingManualOrders(): Promise<Order[]> {
+  const { data, error } = await requireSupabase()
+    .from("arisan_orders")
+    .select("id,name,email,amount,status,payment_url,provider,created_at,paid_at")
+    .eq("provider", "manual")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as OrderRow[]).map(formatOrder);
 }

@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 type JoinRequest = {
   name?: string;
   email?: string;
+  mode?: "doku" | "manual";
 };
 
 function appOrigin(request: Request) {
@@ -27,6 +28,18 @@ export async function POST(request: Request) {
     const body = (await request.json()) as JoinRequest;
     const fallbackPaymentUrl = `${appOrigin(request)}/payment/__ORDER_ID__`;
 
+    // Manual payment: skip DOKU, create order with provider=manual
+    if (body.mode === "manual") {
+      const pending = await createPendingOrder({
+        name: body.name ?? "",
+        email: body.email ?? "",
+        paymentUrl: fallbackPaymentUrl,
+        provider: "manual",
+      });
+      return NextResponse.json({ order: pending.order, manual: true });
+    }
+
+    // DOKU checkout (default)
     const pending = await createPendingOrder({
       name: body.name ?? "",
       email: body.email ?? "",
