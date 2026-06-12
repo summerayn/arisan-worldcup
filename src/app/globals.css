@@ -1367,3 +1367,21 @@ button {
   color: var(--muted);
   line-height: 1.5;
 }
+
+/* ── Flag icons ─────────────────────────────────── */
+
+.flag-icon {
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 2px;
+  height: 18px;
+  width: auto;
+}
+
+.flag-icon.flag-chip {
+  height: 26px;
+}
+
+.flag-icon.flag-table {
+  height: 22px;
+}

@@ -38,8 +38,8 @@ export const MAX_PARTICIPANTS = 24;
 export const COUNTRIES_PER_PARTICIPANT = 2;
 export const ENTRY_FEE_IDR = 100000;
 
-export function flagUrl(iso2: string, size = 80) {
-  return `https://flagcdn.com/w${size}/${iso2}.png`;
+export function flagUrl(iso2: string) {
+  return `https://flagcdn.com/${iso2}.svg`;
 }
 
 export const countries: Country[] = [

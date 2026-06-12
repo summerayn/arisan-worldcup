@@ -48,9 +48,9 @@ function teamFlag(name: string) {
   return countryByName(name)?.iso2 ?? "";
 }
 
-function teamFlagImg(iso2: string, size = 24) {
+function teamFlagImg(iso2: string) {
   if (!iso2) return null;
-  return <img src={flagUrl(iso2, size)} alt="" width={size} height={Math.round(size * 0.67)} style={{ verticalAlign: "middle", borderRadius: "2px" }} />;
+  return <img src={flagUrl(iso2)} alt="" className="flag-icon" />;
 }
 
 function censorEmail(email: string): string {
@@ -80,7 +80,7 @@ function TeamChip({ code, status }: { code: string; status: "alive" | "eliminate
   return (
     <span className={`team-chip ${status === "eliminated" ? "is-eliminated" : ""}`}>
       <span className="team-code">
-        <img src={flagUrl(country.iso2, 32)} alt="" width={32} height={22} style={{ borderRadius: "2px" }} />
+        <img src={flagUrl(country.iso2)} alt="" className="flag-icon flag-chip" />
       </span>
       <span>{country.name}</span>
     </span>
@@ -628,7 +628,7 @@ export default function Home() {
                   key={country.code}
                 >
                   <span>{index + 1}</span>
-                  <em><img src={flagUrl(country.iso2, 28)} alt="" width={28} height={19} style={{ borderRadius: "2px", verticalAlign: "middle" }} /></em>
+                  <em><img src={flagUrl(country.iso2)} alt="" className="flag-icon flag-table" /></em>
                   <strong>{country.name}</strong>
                   <small>{standing.points}</small>
                 </div>
