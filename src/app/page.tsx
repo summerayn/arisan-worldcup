@@ -40,6 +40,13 @@ function splitMatch(label: string) {
   return splitMatchLabel(label);
 }
 
+function censorEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain) return "***@***";
+  const masked = local.length > 1 ? local[0] + "*".repeat(Math.max(local.length - 1, 2)) : "*".repeat(3);
+  return `${masked}@${domain}`;
+}
+
 function formatScore(match: { homeScore?: number; awayScore?: number; status?: string }) {
   if (
     (match.status === "finished" || match.status === "live") &&
@@ -101,7 +108,7 @@ function ParticipantRow({
       </div>
       <div className="participant-name">
         <strong>{participant.name}</strong>
-        <span>{participant.email}</span>
+        <span>{censorEmail(participant.email)}</span>
       </div>
       <div className="team-pair">
         {countriesRevealed
@@ -293,8 +300,20 @@ export default function Home() {
   const progress = Math.min(100, (state.participants.length / state.maxParticipants) * 100);
   const groups = useMemo(() => groupedCountries(), []);
   const headlineMatches = state.matches.slice(0, 2);
-  const nextMatches = state.matches.slice(0, 12);
-  const laterMatches = state.matches.slice(12);
+
+  // Group all matches by date for pagination
+  const matchesByDate = useMemo(() => {
+    const map = new Map<string, typeof state.matches>();
+    for (const m of state.matches) {
+      if (!map.has(m.date)) map.set(m.date, []);
+      map.get(m.date)!.push(m);
+    }
+    return map;
+  }, [state.matches]);
+  const dateKeys = useMemo(() => Array.from(matchesByDate.keys()), [matchesByDate]);
+  const [datePage, setDatePage] = useState(0);
+  const currentDateKey = dateKeys[datePage] ?? "";
+  const currentDateMatches = matchesByDate.get(currentDateKey) ?? [];
 
   return (
     <main className="app-shell" id="beranda">
@@ -470,11 +489,11 @@ export default function Home() {
             <span className="section-icon">03</span>
             <h2>Jadwal Sampai Final</h2>
           </div>
-          <p>Fase grup tampil per match. Knockout memakai tahap resmi sampai final.</p>
+          <p>Fase grup tampil per hari. Gunakan navigasi untuk pindah tanggal.</p>
         </div>
         <div className="schedule-layout">
           <div className="schedule-column">
-            {nextMatches.map((match) => {
+            {currentDateMatches.map((match) => {
               const teams = splitMatch(match.label);
               return (
                 <article className="match-row" key={`${match.date}-${match.label}`}>
@@ -494,18 +513,27 @@ export default function Home() {
               );
             })}
           </div>
-          <div className="schedule-column compact">
-            {laterMatches.map((match) => (
-              <article className="match-row" key={`${match.date}-${match.label}`}>
-                <span className="match-date">{match.date}</span>
-                <div className="match-teams single">
-                  <strong>{match.label}</strong>
-                </div>
-                <span className="match-stage">{match.stage}</span>
-                <small className="match-venue">{match.venue}</small>
-              </article>
-            ))}
-          </div>
+        </div>
+        <div className="schedule-pager">
+          <button
+            className="secondary-button"
+            disabled={datePage === 0}
+            onClick={() => setDatePage((p) => Math.max(0, p - 1))}
+            type="button"
+          >
+            ← Sebelumnya
+          </button>
+          <span className="pager-label">
+            {currentDateKey} ({datePage + 1}/{dateKeys.length})
+          </span>
+          <button
+            className="secondary-button"
+            disabled={datePage >= dateKeys.length - 1}
+            onClick={() => setDatePage((p) => Math.min(dateKeys.length - 1, p + 1))}
+            type="button"
+          >
+            Selanjutnya →
+          </button>
         </div>
       </section>
 

@@ -792,6 +792,24 @@ button {
   gap: 8px;
 }
 
+.schedule-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.pager-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 140px;
+  text-align: center;
+}
+
 .match-row {
   display: grid;
   grid-template-columns: 58px 1fr auto;
