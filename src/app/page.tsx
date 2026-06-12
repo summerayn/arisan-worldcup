@@ -392,33 +392,12 @@ function PhonePreview({
 export default function Home() {
   const [state, setState] = useState(initialState);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [passwordError, setPasswordError] = useState("");
 
   async function refresh() {
     const response = await fetch("/api/state", { cache: "no-store" });
     if (response.ok) {
       setState((await response.json()) as PublicState);
     }
-  }
-
-  function checkPassword(event: FormEvent) {
-    event.preventDefault();
-    fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: passwordInput }),
-    }).then((r) => r.json()).then((data) => {
-      if (data.valid) {
-        setAuthenticated(true);
-        setPasswordError("");
-      } else {
-        setPasswordError("Password salah.");
-      }
-    }).catch(() => {
-      setPasswordError("Gagal verifikasi. Coba lagi.");
-    });
   }
 
   useEffect(() => {
@@ -449,29 +428,6 @@ export default function Home() {
 
   return (
     <main className="app-shell" id="beranda">
-      {!authenticated ? (
-        <section className="login-section">
-          <div className="login-box">
-            <div className="brand-mark login-brand">KP</div>
-            <h2>Masukan password</h2>
-            <form onSubmit={checkPassword} className="login-form">
-              <input
-                type="password"
-                placeholder="Password"
-                value={passwordInput}
-                onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }}
-                required
-                autoFocus
-              />
-              {passwordError ? <p className="form-error">{passwordError}</p> : null}
-              <button className="primary-button wide" type="submit">
-                Masuk
-              </button>
-            </form>
-          </div>
-        </section>
-      ) : (
-      <>
       <header className="topbar">
         <a href="#beranda" className="brand" aria-label="Kocokan Piala Dunia">
           <span className="brand-mark">KP</span>
@@ -702,8 +658,6 @@ export default function Home() {
       </nav>
 
       <JoinDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onJoined={refresh} />
-        </>
-      )}
     </main>
   );
 }
