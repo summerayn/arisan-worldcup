@@ -373,13 +373,20 @@ function PhonePreview({
         {previewMatches.slice(0, 3).map((match) => {
           const teams = splitMatch(match.label);
           return (
-            <article key={`${match.date}-${match.label}`}>
-              <span>{match.date}</span>
-              <strong>{teamFlagImg(teamFlag(teams.home))} {teams.home}</strong>
-              <small className={match.status === "finished" ? "score-pill is-final" : ""}>
-                {formatScore(match)}
-              </small>
-              <strong>{teamFlagImg(teamFlag(teams.away))} {teams.away}</strong>
+            <article className="match-vs-mini" key={`${match.date}-${match.label}`}>
+              <div className="team team-left">
+                <span>{teams.home}</span>
+                {teamFlagImg(teamFlag(teams.home))}
+              </div>
+              <div className="score-block">
+                <span className={`score-vs ${match.status === "finished" ? "is-final" : ""}`}>
+                  {formatScore(match)}
+                </span>
+              </div>
+              <div className="team team-right">
+                {teamFlagImg(teamFlag(teams.away))}
+                <span>{teams.away}</span>
+              </div>
             </article>
           );
         })}
@@ -468,13 +475,21 @@ export default function Home() {
             {headlineMatches.map((match) => {
               const teams = splitMatch(match.label);
               return (
-                <article key={`${match.date}-${match.label}`}>
-                  <span>{match.date}</span>
-                  <strong>{teamFlagImg(teamFlag(teams.home))} {teams.home}</strong>
-                  <small className={match.status === "finished" ? "score-pill is-final" : ""}>
-                    {formatScore(match)}
-                  </small>
-                  <strong>{teamFlagImg(teamFlag(teams.away))} {teams.away}</strong>
+                <article className="match-vs" key={`${match.date}-${match.label}`}>
+                  <div className="team team-left">
+                    <span>{teams.home}</span>
+                    {teamFlagImg(teamFlag(teams.home))}
+                  </div>
+                  <div className="score-block">
+                    <span className={`score-vs ${match.status === "finished" ? "is-final" : ""}`}>
+                      {formatScore(match)}
+                    </span>
+                    <span className="match-meta">{match.date} · {match.stage}</span>
+                  </div>
+                  <div className="team team-right">
+                    {teamFlagImg(teamFlag(teams.away))}
+                    <span>{teams.away}</span>
+                  </div>
                 </article>
               );
             })}
@@ -491,22 +506,26 @@ export default function Home() {
         />
       </section>
 
-      <section className="summary-strip" aria-label="Ringkasan kocokan">
-        <div>
-          <span>Peserta</span>
-          <strong>{state.participants.length}/{state.maxParticipants}</strong>
+      <section className="tournament-bar" aria-label="Ringkasan kocokan">
+        <div className="tournament-stat">
+          <span className="stat-icon">👥</span>
+          <span className="stat-value">{state.participants.length}/{state.maxParticipants}</span>
+          <span className="stat-label">Peserta</span>
         </div>
-        <div>
-          <span>{state.countriesRevealed ? "Negara terambil" : "Negara terkunci"}</span>
-          <strong>{state.countriesRevealed ? state.takenCountries.length : lockedCountries}/48</strong>
+        <div className="tournament-stat">
+          <span className="stat-icon">🔒</span>
+          <span className="stat-value">{state.countriesRevealed ? state.takenCountries.length : lockedCountries}/48</span>
+          <span className="stat-label">{state.countriesRevealed ? "Dibuka" : "Terkunci"}</span>
         </div>
-        <div>
-          <span>Bucket draw</span>
-          <strong>{state.drawBuckets.favorite}+{state.drawBuckets.leastFavorite}</strong>
+        <div className="tournament-stat">
+          <span className="stat-icon">🎯</span>
+          <span className="stat-value">{state.drawBuckets.favorite}+{state.drawBuckets.leastFavorite}</span>
+          <span className="stat-label">Draw Pool</span>
         </div>
-        <div>
-          <span>Biaya join</span>
-          <strong>{formatIdr(state.entryFee)}</strong>
+        <div className="tournament-stat">
+          <span className="stat-icon">💰</span>
+          <span className="stat-value">{formatIdr(state.entryFee)}</span>
+          <span className="stat-label">Biaya Join</span>
         </div>
       </section>
 
@@ -608,19 +627,22 @@ export default function Home() {
             {currentDateMatches.map((match) => {
               const teams = splitMatch(match.label);
               return (
-                <article className="match-row" key={`${match.date}-${match.label}`}>
-                  <span className="match-date">{match.date}</span>
-                  <div className="match-teams">
-                    <strong>{teamFlagImg(teamFlag(teams.home))} {teams.home}</strong>
-                    <small className={match.status === "finished" ? "score-pill is-final" : ""}>
-                      {formatScore(match)}
-                    </small>
-                    <strong>{teamFlagImg(teamFlag(teams.away))} {teams.away}</strong>
+                <article className="match-vs match-vs-schedule" key={`${match.date}-${match.label}`}>
+                  <div className="team team-left">
+                    <span>{teams.home}</span>
+                    {teamFlagImg(teamFlag(teams.home))}
                   </div>
-                  <span className="match-stage">
-                    {match.status === "finished" ? "Final" : match.stage}
-                  </span>
-                  <small className="match-venue">{match.venue}</small>
+                  <div className="score-block">
+                    <span className={`score-vs ${match.status === "finished" ? "is-final" : ""}`}>
+                      {formatScore(match)}
+                    </span>
+                    <span className="match-meta">{match.date} · {match.stage}</span>
+                    <span className="match-venue">{match.venue}</span>
+                  </div>
+                  <div className="team team-right">
+                    {teamFlagImg(teamFlag(teams.away))}
+                    <span>{teams.away}</span>
+                  </div>
                 </article>
               );
             })}
