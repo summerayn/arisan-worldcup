@@ -4,12 +4,14 @@ import { ENTRY_FEE_IDR } from "./worldcup";
 const CHECKOUT_TARGET = "/checkout/v1/payment";
 const PAID_STATUSES = ["SUCCESS", "PAID", "SETTLEMENT", "CAPTURE"];
 
-export function isDokuConfigured() {
-  return Boolean(process.env.DOKU_CLIENT_ID && process.env.DOKU_SECRET_KEY);
+export function isDokuConfigured(overrides?: { clientId?: string; secretKey?: string }) {
+  const clientId = overrides?.clientId ?? process.env.DOKU_CLIENT_ID;
+  const secretKey = overrides?.secretKey ?? process.env.DOKU_SECRET_KEY;
+  return Boolean(clientId && secretKey);
 }
 
-function baseUrl() {
-  return process.env.DOKU_BASE_URL ?? "https://api-sandbox.doku.com";
+function baseUrl(override?: string) {
+  return override ?? process.env.DOKU_BASE_URL ?? "https://api-sandbox.doku.com";
 }
 
 function appUrl() {
@@ -98,9 +100,12 @@ export async function createDokuCheckout(input: {
   orderId: string;
   name: string;
   email: string;
+  clientIdOverride?: string;
+  secretKeyOverride?: string;
+  baseUrlOverride?: string;
 }) {
-  const clientId = process.env.DOKU_CLIENT_ID;
-  const secretKey = process.env.DOKU_SECRET_KEY;
+  const clientId = input.clientIdOverride ?? process.env.DOKU_CLIENT_ID;
+  const secretKey = input.secretKeyOverride ?? process.env.DOKU_SECRET_KEY;
   if (!clientId || !secretKey) {
     throw new Error("DOKU env belum diset.");
   }
@@ -146,7 +151,7 @@ export async function createDokuCheckout(input: {
     secretKey,
   });
 
-  const fetchUrl = `${baseUrl()}${CHECKOUT_TARGET}`;
+  const fetchUrl = `${baseUrl(input.baseUrlOverride)}${CHECKOUT_TARGET}`;
 
   const response = await fetch(fetchUrl, {
     method: "POST",

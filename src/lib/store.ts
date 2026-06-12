@@ -531,3 +531,48 @@ export async function listPendingManualOrders(): Promise<Order[]> {
   if (error) throw new Error(error.message);
   return ((data ?? []) as OrderRow[]).map(formatOrder);
 }
+
+export type AppConfig = {
+  dokuEnabled: boolean;
+  manualEnabled: boolean;
+  dokuClientId: string;
+  dokuSecretKey: string;
+  dokuBaseUrl: string;
+  qrisUrl: string;
+  manualInstructions: string;
+};
+
+export async function getAppConfig(): Promise<AppConfig> {
+  const { data, error } = await requireSupabase()
+    .from("arisan_config")
+    .select("key,value");
+  if (error) throw new Error(error.message);
+
+  const map = new Map((data ?? []).map((row: { key: string; value: string }) => [row.key, row.value]));
+  return {
+    dokuEnabled: map.get("doku_enabled") === "true",
+    manualEnabled: map.get("manual_enabled") === "true",
+    dokuClientId: map.get("doku_client_id") ?? "",
+    dokuSecretKey: map.get("doku_secret_key") ?? "",
+    dokuBaseUrl: map.get("doku_base_url") ?? "https://api-sandbox.doku.com",
+    qrisUrl: map.get("qris_url") ?? "/qris.svg",
+    manualInstructions: map.get("manual_instructions") ?? "",
+  };
+}
+
+export async function updateAppConfig(updates: Partial<AppConfig>) {
+  const rows: { key: string; value: string }[] = [];
+  if (updates.dokuEnabled !== undefined) rows.push({ key: "doku_enabled", value: String(updates.dokuEnabled) });
+  if (updates.manualEnabled !== undefined) rows.push({ key: "manual_enabled", value: String(updates.manualEnabled) });
+  if (updates.dokuClientId !== undefined) rows.push({ key: "doku_client_id", value: updates.dokuClientId });
+  if (updates.dokuSecretKey !== undefined) rows.push({ key: "doku_secret_key", value: updates.dokuSecretKey });
+  if (updates.dokuBaseUrl !== undefined) rows.push({ key: "doku_base_url", value: updates.dokuBaseUrl });
+  if (updates.qrisUrl !== undefined) rows.push({ key: "qris_url", value: updates.qrisUrl });
+  if (updates.manualInstructions !== undefined) rows.push({ key: "manual_instructions", value: updates.manualInstructions });
+
+  if (rows.length > 0) {
+    const { error } = await requireSupabase().from("arisan_config").upsert(rows);
+    if (error) throw new Error(error.message);
+  }
+  return getAppConfig();
+}
