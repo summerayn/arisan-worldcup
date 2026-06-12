@@ -763,15 +763,10 @@ button {
 }
 
 .group-team em {
-  display: inline-grid;
-  min-height: 22px;
-  place-items: center;
-  border-radius: 6px;
-  color: #101608;
-  background: rgba(188, 255, 53, 0.92);
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
   font-style: normal;
-  font-weight: 950;
 }
 
 .group-team strong {
